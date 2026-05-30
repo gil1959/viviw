@@ -6,19 +6,20 @@ export function setupSettingsIPC(ipcMain: IpcMain, mainWindow: BrowserWindow): v
   ipcMain.handle('settings:get', () => {
     const settings: Settings = { ...DEFAULT_SETTINGS }
 
-    const apiKeyEncrypted = getSetting('nineRouterApiKey_encrypted')
+    // Decrypt API key
+    const apiKeyEncrypted = getSetting('apiKey_encrypted')
     if (apiKeyEncrypted && safeStorage.isEncryptionAvailable()) {
       try {
-        settings.nineRouterApiKey = safeStorage.decryptString(
-          Buffer.from(apiKeyEncrypted, 'base64')
-        )
+        settings.apiKey = safeStorage.decryptString(Buffer.from(apiKeyEncrypted, 'base64'))
       } catch {
-        settings.nineRouterApiKey = ''
+        settings.apiKey = ''
       }
     }
 
+    settings.apiEndpoint = getSetting('apiEndpoint') || DEFAULT_SETTINGS.apiEndpoint
     settings.model = getSetting('model') || DEFAULT_SETTINGS.model
     settings.language = getSetting('language') || DEFAULT_SETTINGS.language
+    settings.sttModel = getSetting('sttModel') || DEFAULT_SETTINGS.sttModel
     settings.userName = getSetting('userName') || DEFAULT_SETTINGS.userName
     settings.shortcutToggle = getSetting('shortcutToggle') || DEFAULT_SETTINGS.shortcutToggle
     settings.shortcutCopy = getSetting('shortcutCopy') || DEFAULT_SETTINGS.shortcutCopy
@@ -27,19 +28,25 @@ export function setupSettingsIPC(ipcMain: IpcMain, mainWindow: BrowserWindow): v
   })
 
   ipcMain.handle('settings:save', (_, settings: Settings) => {
-    if (settings.nineRouterApiKey && safeStorage.isEncryptionAvailable()) {
-      const encrypted = safeStorage.encryptString(settings.nineRouterApiKey)
-      setSetting('nineRouterApiKey_encrypted', encrypted.toString('base64'))
+    // Encrypt and store API key
+    if (safeStorage.isEncryptionAvailable()) {
+      const encrypted = safeStorage.encryptString(settings.apiKey || '')
+      setSetting('apiKey_encrypted', encrypted.toString('base64'))
     }
+
+    setSetting('apiEndpoint', settings.apiEndpoint)
     setSetting('model', settings.model)
     setSetting('language', settings.language)
+    setSetting('sttModel', settings.sttModel)
     setSetting('userName', settings.userName)
     setSetting('shortcutToggle', settings.shortcutToggle)
     setSetting('shortcutCopy', settings.shortcutCopy)
+
     registerShortcuts(settings, mainWindow)
     return { success: true }
   })
 
+  // Register shortcuts on startup
   const initialSettings = {
     shortcutToggle: getSetting('shortcutToggle') || DEFAULT_SETTINGS.shortcutToggle,
     shortcutCopy: getSetting('shortcutCopy') || DEFAULT_SETTINGS.shortcutCopy
@@ -49,6 +56,7 @@ export function setupSettingsIPC(ipcMain: IpcMain, mainWindow: BrowserWindow): v
 
 function registerShortcuts(settings: Settings, mainWindow: BrowserWindow): void {
   globalShortcut.unregisterAll()
+
   try {
     globalShortcut.register(settings.shortcutToggle, () => {
       if (mainWindow.isVisible()) mainWindow.hide()

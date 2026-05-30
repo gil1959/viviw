@@ -1,10 +1,10 @@
 import { contextBridge, ipcRenderer } from 'electron'
 
 contextBridge.exposeInMainWorld('viviw', {
-  minimize: () => ipcRenderer.send('window:minimize'),
-  close: () => ipcRenderer.send('window:close'),
-  hide: () => ipcRenderer.send('window:hide'),
-  show: () => ipcRenderer.send('window:show'),
+  minimize: () => ipcRenderer.invoke('window:minimize'),
+  close: () => ipcRenderer.invoke('window:close'),
+  hide: () => ipcRenderer.invoke('window:hide'),
+  show: () => ipcRenderer.invoke('window:show'),
 
   startAudio: () => ipcRenderer.invoke('audio:start'),
   stopAudio: () => ipcRenderer.invoke('audio:stop'),
@@ -44,5 +44,21 @@ contextBridge.exposeInMainWorld('viviw', {
     const listener = (_: unknown, stats: unknown) => callback(stats)
     ipcRenderer.on('stats:update', listener)
     return () => ipcRenderer.removeListener('stats:update', listener)
+  },
+
+  // Setup wizard
+  checkSetup: () => ipcRenderer.invoke('setup:check'),
+  runSetup: () => ipcRenderer.invoke('setup:run'),
+  setupDone: () => ipcRenderer.invoke('setup:done'),
+  onSetupProgress: (callback: (step: unknown) => void) => {
+    const listener = (_: unknown, step: unknown) => callback(step)
+    ipcRenderer.on('setup:progress', listener)
+    return () => ipcRenderer.removeListener('setup:progress', listener)
+  },
+
+  onShortcutCopy: (callback: () => void) => {
+    const listener = () => callback()
+    ipcRenderer.on('shortcut:copy', listener)
+    return () => ipcRenderer.removeListener('shortcut:copy', listener)
   }
 })
