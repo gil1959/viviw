@@ -1,0 +1,33 @@
+appId: com.viviw.app
+productName: VIVIW
+copyright: Copyright © 2025 VIVIW
+
+directories:
+  buildResources: build
+  output: release
+
+files:
+  - dist/**/*
+  - node_modules/**/*
+  - package.json
+
+win:
+  target:
+    - target: dir
+      arch:
+        - x64
+  sign: false
+  signDlls: false
+  forceCodeSigning: false
+
+extraResources:
+  - from: python
+    to: python
+    filter:
+      - "**/*.py"
+      - "**/*.bat"
+  - from: node_modules/sql.js/dist/sql-wasm.wasm
+    to: sql-wasm.wasm
+
+asar: true
+compression: normal
