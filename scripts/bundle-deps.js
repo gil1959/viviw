@@ -16,7 +16,7 @@ const pythonDir = path.join(vendorDir, 'python')
 const soxDir = path.join(vendorDir, 'sox')
 
 const PYTHON_EMBED_URL = 'https://www.python.org/ftp/python/3.11.9/python-3.11.9-embed-amd64.zip'
-const PYTHON_EMBED_SHA256 = 'a5757a5e8b42d2c2e3d0b6e9d6f7c8a1b2e3d4f5a6b7c8d9e0f1a2b3c4d5e6f7'
+const PYTHON_EMBED_SHA256 = '009d6bf7e3b2ddca3d784fa09f90fe54336d5b60f0e0f305c37f400bf83cfd3b'
 const PYTHON_GET_PIP_URL = 'https://bootstrap.pypa.io/get-pip.py'
 
 const SOX_VERSION = '14.4.2'
