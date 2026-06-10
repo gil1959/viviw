@@ -42,22 +42,32 @@ function verifyChecksum(filePath, expectedHash) {
   return true
 }
 
+const DOWNLOAD_TIMEOUT_MS = 300000 // 5 minutes timeout
+
 async function downloadFile(url, destPath) {
   console.log(`  Downloading: ${url}`)
   return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      fs.unlink(destPath, () => {})
+      reject(new Error(`Download timeout after ${DOWNLOAD_TIMEOUT_MS / 1000}s: ${url}`))
+    }, DOWNLOAD_TIMEOUT_MS)
+
     const file = fs.createWriteStream(destPath)
     https.get(url, (response) => {
       // Handle redirects
       if (response.statusCode === 301 || response.statusCode === 302) {
+        clearTimeout(timeout)
         downloadFile(response.headers.location, destPath).then(resolve).catch(reject)
         return
       }
       response.pipe(file)
       file.on('finish', () => {
+        clearTimeout(timeout)
         file.close()
         resolve()
       })
     }).on('error', (err) => {
+      clearTimeout(timeout)
       fs.unlink(destPath, () => {})
       reject(err)
     })
@@ -110,9 +120,9 @@ async function setupPython() {
     stdio: 'inherit'
   })
 
-  // Install faster-whisper + dependencies
-  console.log('  Installing faster-whisper...')
-  execSync(`"${path.join(pythonDir, 'python.exe')}" -m pip install faster-whisper numpy --no-warn-script-location`, {
+  // Install faster-whisper + dependencies (pinned version)
+  console.log('  Installing faster-whisper (pinned v1.1.0)...')
+  execSync(`"${path.join(pythonDir, 'python.exe')}" -m pip install faster-whisper==1.1.0 numpy --no-warn-script-location`, {
     cwd: pythonDir,
     stdio: 'inherit'
   })
