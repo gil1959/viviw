@@ -2,6 +2,7 @@ import { spawn, ChildProcess } from 'child_process'
 import { EventEmitter } from 'events'
 import path from 'path'
 import fs from 'fs'
+import { app } from 'electron'
 
 export class AudioCaptureEngine extends EventEmitter {
   private recordingProcess: ChildProcess | null = null
@@ -30,9 +31,7 @@ export class AudioCaptureEngine extends EventEmitter {
 
   private getSoxPath(): string {
     // Try bundled SoX first (portable install)
-    const isPackaged = !process.env.ELECTRON_IS_DEV
-    
-    if (isPackaged) {
+    if (app.isPackaged) {
       const bundledPath = path.join(process.resourcesPath, 'sox', 'sox.exe')
       if (fs.existsSync(bundledPath)) {
         console.log('[Audio] Using bundled SoX:', bundledPath)
