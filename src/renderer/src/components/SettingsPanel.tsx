@@ -38,19 +38,6 @@ export function SettingsPanel(): React.ReactElement {
       <div className="glass-card p-3">
         <p className="section-label mb-2">AI Provider (9Router / OpenAI-compatible)</p>
 
-        {/* VPS Setup Guide */}
-        {local.apiEndpoint.includes('YOUR-VPS-IP') && (
-          <div className="mb-2 p-2 rounded-md text-[10px]" style={{ background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.3)', color: 'var(--text-muted)' }}>
-            <p className="font-semibold mb-1">📋 Setup 9Router VPS:</p>
-            <ol className="list-decimal pl-3 space-y-0.5">
-              <li>Deploy 9Router ke VPS (DigitalOcean, Vultr, dll)</li>
-              <li>Copy IP address VPS kamu</li>
-              <li>Replace <code className="px-1 rounded" style={{ background: 'rgba(0,0,0,0.2)' }}>YOUR-VPS-IP</code> di URL di bawah</li>
-              <li>Masukkan API Key dari dashboard 9Router</li>
-            </ol>
-          </div>
-        )}
-
         {/* Preset buttons */}
         <div className="flex flex-wrap gap-1 mb-2">
           {PRESET_ENDPOINTS.map(p => (
