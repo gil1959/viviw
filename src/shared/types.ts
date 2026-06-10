@@ -26,6 +26,7 @@ export const DEFAULT_SETTINGS: Settings = {
 
 export const PRESET_ENDPOINTS = [
   { label: '9Router (Local)', url: 'http://localhost:20128/v1', models: ['kr/claude-sonnet-4.5', 'kr/claude-haiku-4.5', 'kr/gpt-4o-mini', 'kr/gemini-2.0-flash'] },
+  { label: '9Router (VPS)', url: 'http://YOUR-VPS-IP:20128/v1', models: ['kr/claude-sonnet-4.5', 'kr/claude-haiku-4.5', 'kr/gpt-4o-mini', 'kr/gemini-2.0-flash'] },
   { label: 'OpenRouter', url: 'https://openrouter.ai/api/v1', models: ['anthropic/claude-3.5-sonnet', 'anthropic/claude-3-haiku', 'openai/gpt-4o-mini', 'google/gemini-flash-1.5'] },
   { label: 'OpenAI', url: 'https://api.openai.com/v1', models: ['gpt-4o', 'gpt-4o-mini', 'gpt-3.5-turbo'] },
   { label: 'Groq (Bebas/Cepat)', url: 'https://api.groq.com/openai/v1', models: ['llama-3.1-70b-versatile', 'mixtral-8x7b-32768', 'gemma2-9b-it'] },
