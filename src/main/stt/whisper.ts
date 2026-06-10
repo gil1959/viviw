@@ -2,6 +2,7 @@ import { spawn, ChildProcess } from 'child_process'
 import { EventEmitter } from 'events'
 import { join } from 'path'
 import { app } from 'electron'
+import fs from 'fs'
 
 interface TranscriptResult {
   text: string
@@ -91,6 +92,24 @@ export class STTEngine extends EventEmitter {
   isReady(): boolean { return this.modelReady }
 
   private findPython(): string | null {
+    // Try bundled Python first (portable install)
+    if (app.isPackaged) {
+      const bundledPath = join(process.resourcesPath, 'python-bundled', 'python.exe')
+      if (fs.existsSync(bundledPath)) {
+        console.log('[STT] Using bundled Python:', bundledPath)
+        return bundledPath
+      }
+    }
+    
+    // Dev mode: check vendor/python
+    const devPath = join(__dirname, '..', '..', '..', 'vendor', 'python', 'python.exe')
+    if (fs.existsSync(devPath)) {
+      console.log('[STT] Using dev Python:', devPath)
+      return devPath
+    }
+    
+    // Fallback: system Python
+    console.log('[STT] Using system Python')
     const spawnSync = require('child_process').spawnSync
     for (const cmd of ['python', 'python3', 'py']) {
       try {

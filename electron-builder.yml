@@ -36,6 +36,14 @@ extraResources:
       - "**/*.bat"
   - from: node_modules/sql.js/dist/sql-wasm.wasm
     to: sql-wasm.wasm
+  - from: vendor/python
+    to: python-bundled
+    filter:
+      - "**/*"
+  - from: vendor/sox
+    to: sox
+    filter:
+      - "**/*"
 
 asar: true
 compression: normal
