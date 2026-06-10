@@ -3,6 +3,7 @@ import { EventEmitter } from 'events'
 import { join } from 'path'
 import { app } from 'electron'
 import fs from 'fs'
+import { getPythonPath } from '../setup/firstRun'
 
 interface TranscriptResult {
   text: string
@@ -24,9 +25,9 @@ export class STTEngine extends EventEmitter {
     return new Promise((resolve, reject) => {
       if (this.isRunning) { resolve(); return }
 
-      const pythonCmd = this.findPython()
+      const pythonCmd = getPythonPath()
       if (!pythonCmd) {
-        reject(new Error('Python not found. Install Python 3.9+ and run python/install_deps.bat'))
+        reject(new Error('Python not found. Please wait for first-run setup to complete.'))
         return
       }
 
@@ -90,33 +91,4 @@ export class STTEngine extends EventEmitter {
   }
 
   isReady(): boolean { return this.modelReady }
-
-  private findPython(): string | null {
-    // Try bundled Python first (portable install)
-    if (app.isPackaged) {
-      const bundledPath = join(process.resourcesPath, 'python', 'python.exe')
-      if (fs.existsSync(bundledPath)) {
-        console.log('[STT] Using bundled Python:', bundledPath)
-        return bundledPath
-      }
-    }
-    
-    // Dev mode: check vendor/python
-    const devPath = join(__dirname, '..', '..', '..', 'vendor', 'python', 'python.exe')
-    if (fs.existsSync(devPath)) {
-      console.log('[STT] Using dev Python:', devPath)
-      return devPath
-    }
-    
-    // Fallback: system Python
-    console.log('[STT] Using system Python')
-    const spawnSync = require('child_process').spawnSync
-    for (const cmd of ['python', 'python3', 'py']) {
-      try {
-        const r = spawnSync(cmd, ['--version'])
-        if (r.status === 0) return cmd
-      } catch { /* try next */ }
-    }
-    return null
-  }
 }

@@ -145,10 +145,15 @@ async function installFasterWhisper(): Promise<void> {
   const fwPath = join(PYTHON_DIR, 'Lib', 'site-packages', 'faster_whisper')
   if (existsSync(fwPath)) return
 
-  // Install faster-whisper + PyTorch CPU
+  // Install faster-whisper --no-deps to avoid CUDA bloat
+  // then install actual deps explicitly (no torch needed)
   execSync(
-    `"${pipExe}" install faster-whisper torch --index-url https://download.pytorch.org/whl/cpu`,
-    { timeout: 600000 } // 10 min timeout for large download
+    `"${pipExe}" install faster-whisper==1.1.0 --no-deps`,
+    { timeout: 120000 }
+  )
+  execSync(
+    `"${pipExe}" install ctranslate2 huggingface_hub tokenizers onnxruntime av tqdm numpy`,
+    { timeout: 600000 }
   )
 }
 

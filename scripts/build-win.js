@@ -11,14 +11,6 @@ const { build, Platform, Arch } = require('electron-builder')
 const projectRoot = path.join(__dirname, '..')
 
 async function main() {
-  // Check if vendor deps exist, if not run bundle-deps
-  const vendorDir = path.join(projectRoot, 'vendor')
-  if (!fs.existsSync(path.join(vendorDir, 'python', 'python.exe')) ||
-      !fs.existsSync(path.join(vendorDir, 'sox', 'sox.exe'))) {
-    console.log('\n[0/3] Vendor deps not found, running bundle-deps...')
-    execSync('node scripts/bundle-deps.js', { cwd: projectRoot, stdio: 'inherit' })
-  }
-
   console.log('\n[1/3] Building app bundle with electron-vite...')
   execSync('npx electron-vite build', { cwd: projectRoot, stdio: 'inherit' })
 

@@ -2,7 +2,7 @@ import { spawn, ChildProcess } from 'child_process'
 import { EventEmitter } from 'events'
 import path from 'path'
 import fs from 'fs'
-import { app } from 'electron'
+import { getSoxPath } from '../setup/firstRun'
 
 export class AudioCaptureEngine extends EventEmitter {
   private recordingProcess: ChildProcess | null = null
@@ -29,31 +29,9 @@ export class AudioCaptureEngine extends EventEmitter {
     console.log('[Audio] Stopped')
   }
 
-  private getSoxPath(): string {
-    // Try bundled SoX first (portable install)
-    if (app.isPackaged) {
-      const bundledPath = path.join(process.resourcesPath, 'sox', 'sox.exe')
-      if (fs.existsSync(bundledPath)) {
-        console.log('[Audio] Using bundled SoX:', bundledPath)
-        return bundledPath
-      }
-    }
-    
-    // Dev mode: check vendor/sox
-    const devPath = path.join(__dirname, '..', '..', '..', 'vendor', 'sox', 'sox.exe')
-    if (fs.existsSync(devPath)) {
-      console.log('[Audio] Using dev SoX:', devPath)
-      return devPath
-    }
-    
-    // Fallback: system PATH
-    console.log('[Audio] Using system SoX from PATH')
-    return 'sox'
-  }
-
   private startCapture(): void {
     // Windows WASAPI loopback via SoX
-    const soxPath = this.getSoxPath()
+    const soxPath = getSoxPath()
     const args = ['-t', 'waveaudio', 'default', '-b', '16', '-c', '1', '-r', String(this.SAMPLE_RATE), '-t', 'raw', '-']
     try {
       this.recordingProcess = spawn(soxPath, args, { stdio: ['ignore', 'pipe', 'ignore'] })
