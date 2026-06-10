@@ -94,7 +94,7 @@ export class STTEngine extends EventEmitter {
   private findPython(): string | null {
     // Try bundled Python first (portable install)
     if (app.isPackaged) {
-      const bundledPath = join(process.resourcesPath, 'python-bundled', 'python.exe')
+      const bundledPath = join(process.resourcesPath, 'python', 'python.exe')
       if (fs.existsSync(bundledPath)) {
         console.log('[STT] Using bundled Python:', bundledPath)
         return bundledPath

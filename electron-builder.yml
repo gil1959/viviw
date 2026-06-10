@@ -37,7 +37,7 @@ extraResources:
   - from: node_modules/sql.js/dist/sql-wasm.wasm
     to: sql-wasm.wasm
   - from: vendor/python
-    to: python-bundled
+    to: python
     filter:
       - "**/*"
   - from: vendor/sox

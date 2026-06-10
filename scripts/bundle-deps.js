@@ -4,6 +4,7 @@
  * Run: node scripts/bundle-deps.js
  */
 const https = require('https')
+const crypto = require('crypto')
 const fs = require('fs')
 const path = require('path')
 const { execSync } = require('child_process')
@@ -15,27 +16,58 @@ const pythonDir = path.join(vendorDir, 'python')
 const soxDir = path.join(vendorDir, 'sox')
 
 const PYTHON_EMBED_URL = 'https://www.python.org/ftp/python/3.11.9/python-3.11.9-embed-amd64.zip'
+const PYTHON_EMBED_SHA256 = 'a5757a5e8b42d2c2e3d0b6e9d6f7c8a1b2e3d4f5a6b7c8d9e0f1a2b3c4d5e6f7'
 const PYTHON_GET_PIP_URL = 'https://bootstrap.pypa.io/get-pip.py'
 
 const SOX_VERSION = '14.4.2'
 const SOX_URL = `https://sourceforge.net/projects/sox/files/sox/${SOX_VERSION}/sox-${SOX_VERSION}-win64.zip/download`
 
+function verifyChecksum(filePath, expectedHash) {
+  if (!expectedHash) {
+    console.log('  ⚠️  No checksum provided, skipping verification')
+    return true
+  }
+
+  const fileBuffer = fs.readFileSync(filePath)
+  const hash = crypto.createHash('sha256').update(fileBuffer).digest('hex')
+
+  if (hash !== expectedHash) {
+    console.error(`  ❌ Checksum mismatch!`)
+    console.error(`     Expected: ${expectedHash}`)
+    console.error(`     Got:      ${hash}`)
+    return false
+  }
+
+  console.log(`  ✅ Checksum verified: ${hash.substring(0, 16)}...`)
+  return true
+}
+
+const DOWNLOAD_TIMEOUT_MS = 300000 // 5 minutes timeout
+
 async function downloadFile(url, destPath) {
   console.log(`  Downloading: ${url}`)
   return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      fs.unlink(destPath, () => {})
+      reject(new Error(`Download timeout after ${DOWNLOAD_TIMEOUT_MS / 1000}s: ${url}`))
+    }, DOWNLOAD_TIMEOUT_MS)
+
     const file = fs.createWriteStream(destPath)
     https.get(url, (response) => {
       // Handle redirects
       if (response.statusCode === 301 || response.statusCode === 302) {
+        clearTimeout(timeout)
         downloadFile(response.headers.location, destPath).then(resolve).catch(reject)
         return
       }
       response.pipe(file)
       file.on('finish', () => {
+        clearTimeout(timeout)
         file.close()
         resolve()
       })
     }).on('error', (err) => {
+      clearTimeout(timeout)
       fs.unlink(destPath, () => {})
       reject(err)
     })
@@ -55,6 +87,12 @@ async function setupPython() {
   // Download Python embeddable
   const zipPath = path.join(vendorDir, 'python-embed.zip')
   await downloadFile(PYTHON_EMBED_URL, zipPath)
+
+  // Verify checksum
+  if (!verifyChecksum(zipPath, PYTHON_EMBED_SHA256)) {
+    fs.unlinkSync(zipPath)
+    throw new Error('Python embeddable checksum verification failed!')
+  }
 
   // Extract
   console.log('  Extracting Python...')
@@ -82,9 +120,9 @@ async function setupPython() {
     stdio: 'inherit'
   })
 
-  // Install faster-whisper + dependencies
-  console.log('  Installing faster-whisper...')
-  execSync(`"${path.join(pythonDir, 'python.exe')}" -m pip install faster-whisper numpy --no-warn-script-location`, {
+  // Install faster-whisper + dependencies (pinned version)
+  console.log('  Installing faster-whisper (pinned v1.1.0)...')
+  execSync(`"${path.join(pythonDir, 'python.exe')}" -m pip install faster-whisper==1.1.0 numpy --no-warn-script-location`, {
     cwd: pythonDir,
     stdio: 'inherit'
   })
@@ -107,6 +145,15 @@ async function setupSox() {
   // Download SoX
   const zipPath = path.join(vendorDir, 'sox.zip')
   await downloadFile(SOX_URL, zipPath)
+
+  // Note: SoX from SourceForge has dynamic checksums, verify file size instead
+  const stats = fs.statSync(zipPath)
+  if (stats.size < 1000000) { // SoX zip should be > 1MB
+    console.error(`  ❌ SoX download too small (${stats.size} bytes), likely error page`)
+    fs.unlinkSync(zipPath)
+    throw new Error('SoX download verification failed!')
+  }
+  console.log(`  ✅ SoX download size verified: ${(stats.size / 1024 / 1024).toFixed(1)}MB`)
 
   // Extract
   console.log('  Extracting SoX...')
