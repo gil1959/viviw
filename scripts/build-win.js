@@ -6,7 +6,7 @@
 const path = require('path')
 const fs = require('fs')
 const { execSync } = require('child_process')
-const { build } = require('electron-builder')
+const { build, Platform, Arch } = require('electron-builder')
 
 const projectRoot = path.join(__dirname, '..')
 
@@ -41,8 +41,7 @@ async function main() {
   // Config reads from electron-builder.yml (single source of truth)
   await build({
     projectDir: projectRoot,
-    win: 'portable',
-    x64: true
+    targets: Platform.WINDOWS.createTarget(['portable'], Arch.x64)
   })
 
   const releaseDir = path.join(projectRoot, 'release')
